@@ -1,9 +1,11 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai
 
-# API Key yt i saktë që sapo u ndez flakë
+# API Key yt i saktë
 API_KEY = "AIzaSyCT9MSCKgzdaMQKl1hJqsoBQPonUXQcZT4"
 
+# Konfigurimi i çelësit zyrtar
+genai.configure(api_key=API_KEY)
 
 st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="centered")
 
@@ -25,18 +27,13 @@ if pyetja := st.chat_input("Shkruaj diçka këtu..."):
     st.session_state.messages.append({"role": "user", "content": pyetja})
     
     try:
-        # Lidhja zyrtare përmes librarisë Google GenAI
-        client = genai.Client(api_key=API_KEY)
-        
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=pyetja,
-        )
+        # Përdorimi i modelit stabël Gemini 1.5 Flash përmes librarisë klasike
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(pyetja)
         pergjigja_ia = response.text
             
     except Exception as e:
-        # Në rast se serveri ngrin për një sekondë, mos nxirr gabim rrjeti
-        pergjigja_ia = "Serveri është pak i ngarkuar ose po stabilizohet. Ju lutem riprovoni pas pak sekondash."
+        pergjigja_ia = f"Ndodhi një gabim gjatë lidhjes: {str(e)}"
     
     with st.chat_message("assistant"):
         st.markdown(pergjigja_ia)
