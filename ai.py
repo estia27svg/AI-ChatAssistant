@@ -41,6 +41,7 @@ if pyetja := st.chat_input("Shkruaj diçka këtu..."):
         response = requests.post(url, json=payload, timeout=30)
         
         if response.status_code == 200:
+            st.write(response.text)
             data = response.json()
             pergjigja_ia = data['candidates'][0]['content']['parts'][0]['text']
         else:
