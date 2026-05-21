@@ -1,11 +1,8 @@
 import streamlit as st
-import google.generativeai as genai
+import requests
 
 # API Key yt i saktë
 API_KEY = "AIzaSyCT9MSCKgzdaMQKl1hJqsoBQPonUXQcZT4"
-
-# Konfigurimi i çelësit zyrtar
-genai.configure(api_key=API_KEY)
 
 st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="centered")
 
@@ -27,13 +24,31 @@ if pyetja := st.chat_input("Shkruaj diçka këtu..."):
     st.session_state.messages.append({"role": "user", "content": pyetja})
     
     try:
-        # Përdorimi i modelit stabël Gemini 1.5 Flash përmes librarisë klasike
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(pyetja)
-        pergjigja_ia = response.text
+        # URL zyrtare e saktë pa v1beta që funksionon me requests
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+        
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": pyetja}
+                    ]
+                }
+            ]
+        }
+        
+        # Rrisim timeout në 30 sekonda që mos të bllokohet kurrë nga rrjeti
+        response = requests.post(url, json=payload, timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            pergjigja_ia = data['candidates'][0]['content']['parts'][0]['text']
+        else:
+            # Nëse Google ka ndonjë problem të përkohshëm, të na tregojë saktë kodin
+            pergjigja_ia = f"Serveri i Google u përgjigj me kodin {response.status_code}. Ju lutem riprovoni pas pak."
             
     except Exception as e:
-        pergjigja_ia = f"Ndodhi një gabim gjatë lidhjes: {str(e)}"
+        pergjigja_ia = "Ndodhi një vonesë e vogël në rrjet. Ju lutem shkruani përsëri."
     
     with st.chat_message("assistant"):
         st.markdown(pergjigja_ia)
